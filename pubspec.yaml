@@ -37,6 +37,8 @@ dependencies:
   hive:
   hive_flutter:
   path_provider:
+  equatable:
+  bloc:
   
 
 dev_dependencies:
