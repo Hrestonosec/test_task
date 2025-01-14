@@ -21,4 +21,18 @@ class TaskRepository {
   Future<void> deleteTask(int index) async {
     await _taskBox.deleteAt(index);
   }
+
+  Future<void> deleteCompletedTasks() async {
+    // Отримуємо всі задачі, залишаємо лише невиконані
+    final remainingTasks =
+        _taskBox.values.where((task) => !task.isCompleted).toList();
+
+    // Видаляємо все з боксу
+    await _taskBox.clear();
+
+    // Додаємо назад тільки невиконані задачі
+    for (final task in remainingTasks) {
+      await _taskBox.add(task);
+    }
+  }
 }

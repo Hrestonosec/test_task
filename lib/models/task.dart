@@ -14,7 +14,7 @@ class Task {
   final String category;
 
   @HiveField(3)
-  final bool isCompleted;
+  bool isCompleted;
 
   Task({
     required this.title,
