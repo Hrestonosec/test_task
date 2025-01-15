@@ -9,7 +9,7 @@ part 'task_state.dart';
 class TaskBloc extends Bloc<TaskEvent, TaskState> {
   final TaskRepository repository;
 
-  TaskBloc(this.repository) : super(TaskInitial()) {
+  TaskBloc({required this.repository}) : super(TaskInitial()) {
     on<LoadTasksEvent>(_onLoadTasks);
     on<AddTaskEvent>(_onAddTask);
     on<ToggleTaskCompletionEvent>(_onToggleTaskCompletion);
@@ -46,9 +46,9 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     if (state is TaskLoaded) {
       final currentState = state as TaskLoaded;
 
-      final updatedTask = currentState.tasks[event.taskId];
-
-      updatedTask.isCompleted = !updatedTask.isCompleted;
+      final updatedTask = currentState.tasks[event.taskId].copyWith(
+        isCompleted: !currentState.tasks[event.taskId].isCompleted,
+      );
 
       await repository.updateTask(event.taskId, updatedTask);
 
