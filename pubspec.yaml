@@ -39,6 +39,7 @@ dependencies:
   path_provider:
   equatable:
   bloc:
+  flutter_bloc:
   
 
 dev_dependencies:

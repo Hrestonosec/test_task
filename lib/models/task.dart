@@ -14,7 +14,7 @@ class Task {
   final String category;
 
   @HiveField(3)
-  bool isCompleted;
+  final bool isCompleted;
 
   Task({
     required this.title,
@@ -22,4 +22,18 @@ class Task {
     required this.category,
     this.isCompleted = false,
   });
+
+  Task copyWith({
+    String? title,
+    String? description,
+    String? category,
+    bool? isCompleted,
+  }) {
+    return Task(
+      title: title ?? this.title,
+      description: description ?? this.description,
+      category: category ?? this.category,
+      isCompleted: isCompleted ?? this.isCompleted,
+    );
+  }
 }

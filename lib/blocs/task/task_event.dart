@@ -25,7 +25,7 @@ class AddTaskEvent extends TaskEvent {
 class ToggleTaskCompletionEvent extends TaskEvent {
   final int taskId;
 
-  ToggleTaskCompletionEvent(this.taskId);
+  ToggleTaskCompletionEvent({required this.taskId});
 
   @override
   List<Object?> get props => [taskId];
@@ -34,7 +34,7 @@ class ToggleTaskCompletionEvent extends TaskEvent {
 class DeleteTaskEvent extends TaskEvent {
   final int taskId;
 
-  DeleteTaskEvent(this.taskId);
+  DeleteTaskEvent({required this.taskId});
 
   @override
   List<Object?> get props => [taskId];
