@@ -11,6 +11,7 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
 
   TaskBloc({required this.repository}) : super(TaskInitial()) {
     on<LoadTasksEvent>(_onLoadTasks);
+    on<FilterTasksByCategoryEvent>(_onFilterTasksByCategory);
     on<AddTaskEvent>(_onAddTask);
     on<ToggleTaskCompletionEvent>(_onToggleTaskCompletion);
     on<DeleteTaskEvent>(_onDeleteTask);
@@ -20,10 +21,28 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
   void _onLoadTasks(LoadTasksEvent event, Emitter<TaskState> emit) async {
     emit(TaskLoading());
     try {
-      final tasks = await repository.loadTasks();
-      emit(TaskLoaded(tasks));
+      final filteredTasks = await repository.loadTasks();
+      final allTasks = await repository.loadTasks();
+
+      emit(TaskLoaded(filteredTasks, allTasks));
     } catch (e) {
       emit(TaskError('Failed to load tasks'));
+    }
+  }
+
+  void _onFilterTasksByCategory(
+      FilterTasksByCategoryEvent event, Emitter<TaskState> emit) {
+    if (state is TaskLoaded) {
+      final currentState = state as TaskLoaded;
+
+      final filteredTasks = currentState.allTasks
+          .where((task) =>
+              event.selectedCategories.isEmpty ||
+              event.selectedCategories.contains(task.category))
+          .toList();
+
+      emit(TaskLoaded(filteredTasks, currentState.allTasks,
+          selectedCategories: event.selectedCategories));
     }
   }
 
@@ -36,8 +55,8 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
         category: event.category,
       );
       await repository.addTask(newTask);
-      final updatedTasks = [...currentState.tasks, newTask];
-      emit(TaskLoaded(updatedTasks));
+      final updatedTasks = [...currentState.filteredTasks, newTask];
+      emit(TaskLoaded(updatedTasks, currentState.allTasks));
     }
   }
 
@@ -46,16 +65,16 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     if (state is TaskLoaded) {
       final currentState = state as TaskLoaded;
 
-      final updatedTask = currentState.tasks[event.taskId].copyWith(
-        isCompleted: !currentState.tasks[event.taskId].isCompleted,
+      final updatedTask = currentState.filteredTasks[event.taskId].copyWith(
+        isCompleted: !currentState.filteredTasks[event.taskId].isCompleted,
       );
 
       await repository.updateTask(event.taskId, updatedTask);
 
-      final updatedTasks = List<Task>.from(currentState.tasks)
+      final updatedTasks = List<Task>.from(currentState.filteredTasks)
         ..[event.taskId] = updatedTask;
 
-      emit(TaskLoaded(updatedTasks));
+      emit(TaskLoaded(updatedTasks, currentState.allTasks));
     }
   }
 
@@ -65,10 +84,10 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
 
       await repository.deleteTask(event.taskId);
 
-      final updatedTasks = List<Task>.from(currentState.tasks)
+      final updatedTasks = List<Task>.from(currentState.filteredTasks)
         ..removeAt(event.taskId);
 
-      emit(TaskLoaded(updatedTasks));
+      emit(TaskLoaded(updatedTasks, currentState.allTasks));
     }
   }
 
@@ -79,10 +98,11 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
 
       await repository.deleteCompletedTasks();
 
-      final updatedTasks =
-          currentState.tasks.where((task) => !task.isCompleted).toList();
+      final updatedTasks = currentState.filteredTasks
+          .where((task) => !task.isCompleted)
+          .toList();
 
-      emit(TaskLoaded(updatedTasks));
+      emit(TaskLoaded(updatedTasks, currentState.allTasks));
     }
   }
 }
