@@ -7,6 +7,12 @@ abstract class TaskEvent extends Equatable {
 
 class LoadTasksEvent extends TaskEvent {}
 
+class FilterTasksByCategoryEvent extends TaskEvent {
+  final List<String> selectedCategories;
+
+  FilterTasksByCategoryEvent(this.selectedCategories);
+}
+
 class AddTaskEvent extends TaskEvent {
   final String title;
   final String description;

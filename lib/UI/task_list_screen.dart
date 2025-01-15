@@ -16,118 +16,203 @@ class _TaskListScreenState extends State<TaskListScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       body: SafeArea(
-        child: Column(
-          children: [
-            // Віджет для введення нової задачі
-            Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
+        child: BlocBuilder<TaskBloc, TaskState>(
+          // Переносимо BlocBuilder сюди
+          builder: (context, state) {
+            if (state is TaskLoading) {
+              return Center(child: CircularProgressIndicator());
+            } else if (state is TaskLoaded) {
+              return Column(
                 children: [
-                  TextField(
-                    controller: titleController,
-                    decoration: InputDecoration(
-                      labelText: "Назва задачі",
-                      border: OutlineInputBorder(),
+                  // Віджети для введення задач, кнопки, тощо
+                  Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      children: [
+                        TextField(
+                          controller: titleController,
+                          decoration: InputDecoration(
+                            labelText: "Назва задачі",
+                            border: OutlineInputBorder(),
+                          ),
+                          maxLength: 50, // Обмеження на кількість символів
+                        ),
+                        SizedBox(height: 10),
+                        TextField(
+                          controller: descriptionController,
+                          decoration: InputDecoration(
+                            labelText: "Опис задачі",
+                            border: OutlineInputBorder(),
+                          ),
+                          maxLength: 100, // Обмеження на кількість символів
+                          maxLines: 1, // Однорядковий текст
+                        ),
+                        SizedBox(height: 10),
+                        Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              DropdownButton<String>(
+                                value: selectedCategory,
+                                onChanged: (newCategory) {
+                                  if (newCategory != null) {
+                                    setState(() {
+                                      selectedCategory = newCategory;
+                                    });
+                                  }
+                                },
+                                items: ['Робота', 'Особисті справи', 'Навчання']
+                                    .map((category) => DropdownMenuItem<String>(
+                                          value: category,
+                                          child: Text(category),
+                                        ))
+                                    .toList(),
+                              ),
+                              ElevatedButton(
+                                onPressed: () {
+                                  final title = titleController.text;
+                                  final description =
+                                      descriptionController.text;
+
+                                  if (title.isNotEmpty &&
+                                      description.isNotEmpty) {
+                                    context.read<TaskBloc>().add(
+                                          AddTaskEvent(
+                                            title: title,
+                                            description: description,
+                                            category: selectedCategory,
+                                          ),
+                                        );
+                                    titleController.clear();
+                                    descriptionController.clear();
+                                  }
+                                },
+                                child: Text("Додати задачу"),
+                              ),
+                            ]) // Ваші TextField, DropdownButton і кнопки
+                      ],
                     ),
-                    maxLength: 50, // Обмеження на кількість символів
                   ),
-                  SizedBox(height: 10),
-                  TextField(
-                    controller: descriptionController,
-                    decoration: InputDecoration(
-                      labelText: "Опис задачі",
-                      border: OutlineInputBorder(),
-                    ),
-                    maxLength: 100, // Обмеження на кількість символів
-                    maxLines: 1, // Однорядковий текст
-                  ),
-                  SizedBox(height: 10),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      DropdownButton<String>(
-                        value: selectedCategory,
-                        onChanged: (newCategory) {
-                          if (newCategory != null) {
-                            setState(() {
-                              selectedCategory = newCategory;
-                            });
-                          }
-                        },
-                        items: ['Робота', 'Особисті справи', 'Навчання']
-                            .map((category) => DropdownMenuItem<String>(
-                                  value: category,
-                                  child: Text(category),
-                                ))
-                            .toList(),
-                      ),
-                      SizedBox(
-                        width: 10,
-                      ),
                       ElevatedButton(
                         onPressed: () {
-                          final title = titleController.text;
-                          final description = descriptionController.text;
-
-                          if (title.isNotEmpty && description.isNotEmpty) {
+                          context
+                              .read<TaskBloc>()
+                              .add(DeleteCompletedTasksEvent());
+                        },
+                        child: Text("Очистити виконані"),
+                      ),
+                      IconButton(
+                        icon: Icon(Icons.filter_list),
+                        onPressed: () async {
+                          final selectedCategories =
+                              await showDialog<List<String>>(
+                            context: context,
+                            builder: (context) {
+                              final selected = <String>{
+                                ...state.selectedCategories
+                              };
+                              return StatefulBuilder(
+                                builder: (context, setState) {
+                                  return AlertDialog(
+                                    title: Text("Обрати категорії"),
+                                    content: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          "Зніміть всі категорії, щоб показати всі задачі.",
+                                          style: TextStyle(
+                                              fontSize: 12, color: Colors.grey),
+                                        ),
+                                        ...[
+                                          'Робота',
+                                          'Особисті справи',
+                                          'Навчання'
+                                        ].map((category) {
+                                          return CheckboxListTile(
+                                            title: Text(category),
+                                            value: selected.contains(category),
+                                            onChanged: (isChecked) {
+                                              setState(() {
+                                                if (isChecked!) {
+                                                  selected.add(category);
+                                                } else {
+                                                  selected.remove(category);
+                                                }
+                                              });
+                                            },
+                                          );
+                                        }),
+                                      ],
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () =>
+                                            Navigator.pop(context, null),
+                                        child: Text("Скасувати"),
+                                      ),
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(
+                                            context, selected.toList()),
+                                        child: Text("ОК"),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              );
+                            },
+                          );
+                          if (selectedCategories != null) {
                             context.read<TaskBloc>().add(
-                                  AddTaskEvent(
-                                    title: title,
-                                    description: description,
-                                    category: selectedCategory,
-                                  ),
-                                );
-                            titleController.clear();
-                            descriptionController.clear();
+                                FilterTasksByCategoryEvent(selectedCategories));
                           }
                         },
-                        child: Text("Додати задачу"),
                       ),
                     ],
                   ),
-                ],
-              ),
-            ),
-            BlocBuilder<TaskBloc, TaskState>(
-              builder: (context, state) {
-                if (state is TaskLoading) {
-                  return Center(child: CircularProgressIndicator());
-                } else if (state is TaskLoaded) {
-                  final tasks = state.tasks;
-                  return Expanded(
-                    // Додаємо обгортку Expanded
+                  // Список задач
+                  Expanded(
                     child: ListView.builder(
-                      itemCount: tasks.length,
+                      itemCount: state.filteredTasks.length,
                       itemBuilder: (context, index) {
-                        final task = tasks[index];
+                        final task = state.filteredTasks[index];
                         return ListTile(
-                          title: Text(task.title),
+                          title: Row(
+                            children: [
+                              Text("${task.title}   "),
+                              Text(
+                                task.category,
+                                style:
+                                    TextStyle(fontSize: 12, color: Colors.grey),
+                              ),
+                            ],
+                          ),
                           subtitle: Text(task.description),
                           trailing: IconButton(
                             icon: Icon(
                                 task.isCompleted ? Icons.check : Icons.clear),
                             onPressed: () {
                               context.read<TaskBloc>().add(
-                                    ToggleTaskCompletionEvent(taskId: index),
-                                  );
+                                  ToggleTaskCompletionEvent(taskId: index));
                             },
                           ),
                           onLongPress: () {
-                            context.read<TaskBloc>().add(
-                                  DeleteTaskEvent(taskId: index),
-                                );
+                            context
+                                .read<TaskBloc>()
+                                .add(DeleteTaskEvent(taskId: index));
                           },
                         );
                       },
                     ),
-                  );
-                } else if (state is TaskError) {
-                  return Center(child: Text('Помилка: ${state.message}'));
-                }
-                return Text("Сталася якась помилка");
-              },
-            ),
-          ],
+                  ),
+                ],
+              );
+            } else if (state is TaskError) {
+              return Center(child: Text('Помилка: ${state.message}'));
+            }
+            return Center(child: Text('Невідомий стан'));
+          },
         ),
       ),
     );
