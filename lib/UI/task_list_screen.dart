@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:test_task/blocs/task/task_bloc.dart';
+import 'package:test_task/blocs/weather/weather_bloc.dart';
+
+import 'widgets/weather_widget.dart';
 
 class TaskListScreen extends StatefulWidget {
   @override
@@ -15,6 +18,25 @@ class _TaskListScreenState extends State<TaskListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      appBar: AppBar(
+        title: BlocBuilder<WeatherBloc, WeatherState>(
+          builder: (context, state) {
+            if (state is WeatherLoaded) {
+              return WeatherWidget(
+                temperature: state.temperature.toInt().toString(),
+                weatherCondition: state.description,
+                city: state.city,
+              );
+            } else if (state is WeatherLoading) {
+              return Text('Завантаження погоди...');
+            } else if (state is WeatherError) {
+              return Text('Помилка погоди');
+            } else {
+              return Text('Погода');
+            }
+          },
+        ),
+      ),
       body: SafeArea(
         child: BlocBuilder<TaskBloc, TaskState>(
           // Переносимо BlocBuilder сюди

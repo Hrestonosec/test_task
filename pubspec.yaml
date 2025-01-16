@@ -40,6 +40,8 @@ dependencies:
   equatable:
   bloc:
   flutter_bloc:
+  geolocator:
+  http:
   
 
 dev_dependencies:
