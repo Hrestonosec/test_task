@@ -15,25 +15,30 @@ class TaskListScreen extends StatefulWidget {
 class _TaskListScreenState extends State<TaskListScreen> {
   final TextEditingController titleController = TextEditingController();
   final TextEditingController descriptionController = TextEditingController();
-  String selectedCategory = 'Робота'; // Категорія за замовчуванням
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        // AppBar contains the weather information
         title: BlocBuilder<WeatherBloc, WeatherState>(
+          // Using BlocBuilder to listen for weather state changes
           builder: (context, state) {
             if (state is WeatherLoaded) {
+              // If the weather is loaded, display the weather widget with data
               return WeatherWidget(
                 temperature: state.temperature.toInt().toString(),
                 weatherCondition: state.description,
                 city: state.city,
               );
             } else if (state is WeatherLoading) {
+              // While weather is loading, show loading text
               return Text('Завантаження погоди...');
             } else if (state is WeatherError) {
+              // If there's an error with fetching weather, show an error message
               return Text('Помилка погоди');
             } else {
+              // Default title when there's no weather data
               return Text('Погода');
             }
           },
@@ -41,23 +46,28 @@ class _TaskListScreenState extends State<TaskListScreen> {
       ),
       body: SafeArea(
         child: BlocBuilder<TaskBloc, TaskState>(
-          // Переносимо BlocBuilder сюди
+          // Using BlocBuilder to listen for task state changes
           builder: (context, state) {
             if (state is TaskLoading) {
+              // While tasks are loading, show loading indicator
               return Center(child: CircularProgressIndicator());
             } else if (state is TaskLoaded) {
+              // If tasks are loaded, display task management widgets
               return Column(
                 children: [
-                  // Віджети для введення задач, кнопки, тощо
+                  // Widget to add a new task
                   AddTaskWidget(),
+                  // Display the list of tasks with controls
                   Expanded(
                     child: TaskListWithControls(state: state),
                   ),
                 ],
               );
             } else if (state is TaskError) {
+              // If there's an error with loading tasks, show error message
               return Center(child: Text('Помилка: ${state.message}'));
             }
+            // Default case when the state is unknown
             return Center(child: Text('Невідомий стан'));
           },
         ),

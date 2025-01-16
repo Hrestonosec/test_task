@@ -3,7 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:test_task/blocs/task/task_bloc.dart';
 
 class TaskListWithControls extends StatelessWidget {
-  final TaskLoaded state;
+  final TaskLoaded
+      state; // State holding the list of tasks and selected categories
 
   TaskListWithControls({required this.state});
 
@@ -14,33 +15,38 @@ class TaskListWithControls extends StatelessWidget {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
+            // Button to delete completed tasks
             ElevatedButton(
               onPressed: () {
                 context.read<TaskBloc>().add(DeleteCompletedTasksEvent());
               },
               child: Text("Очистити виконані"),
             ),
+            // IconButton for showing task filter options
             IconButton(
               icon: Icon(Icons.filter_list),
               onPressed: () async {
+                // Open a dialog for filtering tasks by category and status
                 final filterOptions = await showDialog<Map<String, dynamic>>(
                   context: context,
                   builder: (context) {
                     final selectedCategories = <String>{
                       ...state.selectedCategories
-                    };
-                    String selectedStatus = 'Всі';
+                    }; // Selected categories for filtering
+                    String selectedStatus = 'Всі'; // Default status filter
                     return StatefulBuilder(
                       builder: (context, setState) {
                         return AlertDialog(
                           content: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
+                              // Informational text for categories
                               Text(
                                 "Зніміть всі категорії, щоб показати всі задачі.",
                                 style:
                                     TextStyle(fontSize: 12, color: Colors.grey),
                               ),
+                              // Checkbox list for selecting categories
                               ...['Робота', 'Особисті справи', 'Навчання']
                                   .map((category) {
                                 return CheckboxListTile(
@@ -59,6 +65,7 @@ class TaskListWithControls extends StatelessWidget {
                               }),
                               Divider(),
                               Text("Фільтрувати за статусом"),
+                              // Radio buttons for selecting task status
                               RadioListTile<String>(
                                 title: Text("Всі"),
                                 value: 'Всі',
@@ -92,10 +99,12 @@ class TaskListWithControls extends StatelessWidget {
                             ],
                           ),
                           actions: [
+                            // Cancel button for the dialog
                             TextButton(
                               onPressed: () => Navigator.pop(context, null),
                               child: Text("Скасувати"),
                             ),
+                            // OK button to apply the filters
                             TextButton(
                               onPressed: () => Navigator.pop(context, {
                                 'categories': selectedCategories.toList(),
@@ -110,6 +119,7 @@ class TaskListWithControls extends StatelessWidget {
                   },
                 );
 
+                // If filters are selected, apply them
                 if (filterOptions != null) {
                   context
                       .read<TaskBloc>()
@@ -122,14 +132,16 @@ class TaskListWithControls extends StatelessWidget {
             ),
           ],
         ),
+        // Task list display
         Expanded(
           child: ListView.builder(
-            itemCount: state.filteredTasks.length,
+            itemCount: state.filteredTasks.length, // Number of tasks to display
             itemBuilder: (context, index) {
-              final task = state.filteredTasks[index];
+              final task = state.filteredTasks[index]; // The current task
               return ListTile(
                 title: Row(
                   children: [
+                    // Task title and category
                     Text("${task.title}   "),
                     Text(
                       task.category,
@@ -137,16 +149,21 @@ class TaskListWithControls extends StatelessWidget {
                     ),
                   ],
                 ),
-                subtitle: Text(task.description),
+                subtitle: Text(task.description), // Task description
                 trailing: IconButton(
-                  icon: Icon(task.isCompleted ? Icons.check : Icons.clear),
+                  // Icon to toggle task completion state
+                  icon: Icon(task.isCompleted
+                      ? Icons.check_box_outlined
+                      : Icons.square_outlined),
                   onPressed: () {
+                    // Toggle the completion status of the task
                     context
                         .read<TaskBloc>()
                         .add(ToggleTaskCompletionEvent(taskId: index));
                   },
                 ),
                 onLongPress: () {
+                  // Delete task when long pressed
                   context.read<TaskBloc>().add(DeleteTaskEvent(taskId: index));
                 },
               );

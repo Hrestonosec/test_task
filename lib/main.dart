@@ -1,21 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart'; // Додаємо цей імпорт для роботи з BLoC
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:test_task/UI/task_list_screen.dart';
 import 'package:test_task/blocs/task/task_bloc.dart';
 import 'package:test_task/blocs/weather/weather_bloc.dart';
 import 'package:test_task/models/task.dart';
 import 'package:test_task/repositories/task_repository.dart';
-import 'package:test_task/repositories/weather_repository.dart'; // Імпортуємо TaskRepository
+import 'package:test_task/repositories/weather_repository.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  await Hive.initFlutter();
+  WidgetsFlutterBinding
+      .ensureInitialized(); // Ensures that Flutter bindings are initialized before using any other code
+  await Hive.initFlutter(); // Initializes Hive storage for Flutter
 
-  Hive.registerAdapter(TaskAdapter()); // Реєструємо адаптер
-  final taskBox = await Hive.openBox<Task>('tasksBox'); // Відкриваємо сховище
+  Hive.registerAdapter(
+      TaskAdapter()); // Registers a custom Hive adapter for Task model
+  final taskBox = await Hive.openBox<Task>(
+      'tasksBox'); // Opens or creates a box to store Task objects in Hive
 
-  runApp(MyApp(taskBox)); // Передаємо коробку в MyApp
+  runApp(MyApp(taskBox)); // Runs the app and passes the taskBox to MyApp widget
 }
 
 class MyApp extends StatelessWidget {
@@ -26,36 +29,38 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Test task',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
         useMaterial3: true,
       ),
-      // В обгортці BlocProvider забезпечуємо доступ до TaskBloc
       home: MultiBlocProvider(
+        // Provides multiple BLoCs to the widget tree
         providers: [
           BlocProvider<TaskBloc>(
+            // Provides TaskBloc to the widget tree
             create: (context) {
               final taskBloc = TaskBloc(
-                repository: TaskRepository(Hive.box<Task>('tasksBox')),
+                repository: TaskRepository(Hive.box<Task>(
+                    'tasksBox')), // Passes a TaskRepository that uses the Hive box
               );
-              taskBloc
-                  .add(LoadTasksEvent()); // Додаємо подію завантаження задач
+              taskBloc.add(LoadTasksEvent()); // Dispatches event to load tasks
               return taskBloc;
             },
           ),
           BlocProvider<WeatherBloc>(
+            // Provides WeatherBloc to the widget tree
             create: (context) {
               final weatherBloc = WeatherBloc(
-                repository: WeatherRepository(),
+                repository: WeatherRepository(), // Passes a WeatherRepository
               );
               weatherBloc
-                  .add(LoadWeather()); // Додаємо подію завантаження погоди
+                  .add(LoadWeather()); // Dispatches event to load weather data
               return weatherBloc;
             },
           ),
         ],
-        child: TaskListScreen(), // Основний екран
+        child: TaskListScreen(),
       ),
     );
   }
