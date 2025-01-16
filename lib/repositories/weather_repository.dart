@@ -4,7 +4,7 @@ import 'dart:convert';
 import 'package:test_task/services/location_service.dart';
 
 class WeatherRepository {
-  final String apiKey = 'ad8eec9bc063bb04fc5e1e84035a018c';
+  final String apiKey = 'YOUR_API_KEY';
 
   Future<Weather> fetchWeather() async {
     // Отримання геолокації, замінити на вашу реалізацію
