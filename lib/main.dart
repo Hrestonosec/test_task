@@ -3,8 +3,10 @@ import 'package:flutter_bloc/flutter_bloc.dart'; // Додаємо цей імп
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:test_task/UI/task_list_screen.dart';
 import 'package:test_task/blocs/task/task_bloc.dart';
+import 'package:test_task/blocs/weather/weather_bloc.dart';
 import 'package:test_task/models/task.dart';
-import 'package:test_task/repositories/task_repository.dart'; // Імпортуємо TaskRepository
+import 'package:test_task/repositories/task_repository.dart';
+import 'package:test_task/repositories/weather_repository.dart'; // Імпортуємо TaskRepository
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -30,14 +32,30 @@ class MyApp extends StatelessWidget {
         useMaterial3: true,
       ),
       // В обгортці BlocProvider забезпечуємо доступ до TaskBloc
-      home: BlocProvider(
-        create: (context) {
-          final taskBloc =
-              TaskBloc(repository: TaskRepository(Hive.box<Task>('tasksBox')));
-          taskBloc.add(LoadTasksEvent()); // Додаємо подію завантаження задач
-          return taskBloc;
-        },
-        child: TaskListScreen(),
+      home: MultiBlocProvider(
+        providers: [
+          BlocProvider<TaskBloc>(
+            create: (context) {
+              final taskBloc = TaskBloc(
+                repository: TaskRepository(Hive.box<Task>('tasksBox')),
+              );
+              taskBloc
+                  .add(LoadTasksEvent()); // Додаємо подію завантаження задач
+              return taskBloc;
+            },
+          ),
+          BlocProvider<WeatherBloc>(
+            create: (context) {
+              final weatherBloc = WeatherBloc(
+                repository: WeatherRepository(),
+              );
+              weatherBloc
+                  .add(LoadWeather()); // Додаємо подію завантаження погоди
+              return weatherBloc;
+            },
+          ),
+        ],
+        child: TaskListScreen(), // Основний екран
       ),
     );
   }
