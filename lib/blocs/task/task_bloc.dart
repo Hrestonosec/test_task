@@ -11,7 +11,8 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
 
   TaskBloc({required this.repository}) : super(TaskInitial()) {
     on<LoadTasksEvent>(_onLoadTasks);
-    on<FilterTasksByCategoryEvent>(_onFilterTasksByCategory);
+    on<FilterTasksByCategoryAndStatusEvent>(
+        _filterTasksByCategoryAndStatusEvent);
     on<AddTaskEvent>(_onAddTask);
     on<ToggleTaskCompletionEvent>(_onToggleTaskCompletion);
     on<DeleteTaskEvent>(_onDeleteTask);
@@ -30,16 +31,21 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
     }
   }
 
-  void _onFilterTasksByCategory(
-      FilterTasksByCategoryEvent event, Emitter<TaskState> emit) {
+  void _filterTasksByCategoryAndStatusEvent(
+      FilterTasksByCategoryAndStatusEvent event, Emitter<TaskState> emit) {
     if (state is TaskLoaded) {
       final currentState = state as TaskLoaded;
 
-      final filteredTasks = currentState.allTasks
-          .where((task) =>
-              event.selectedCategories.isEmpty ||
-              event.selectedCategories.contains(task.category))
-          .toList();
+      final filteredTasks = currentState.allTasks.where((task) {
+        bool matchesCategory = event.selectedCategories.isEmpty ||
+            event.selectedCategories.contains(task.category);
+
+        bool matchesStatus = (event.status == 'Всі') ||
+            (event.status == 'Виконані' && task.isCompleted) ||
+            (event.status == 'Невиконані' && !task.isCompleted);
+
+        return matchesCategory && matchesStatus;
+      }).toList();
 
       emit(TaskLoaded(filteredTasks, currentState.allTasks,
           selectedCategories: event.selectedCategories));
@@ -74,7 +80,10 @@ class TaskBloc extends Bloc<TaskEvent, TaskState> {
       final updatedTasks = List<Task>.from(currentState.filteredTasks)
         ..[event.taskId] = updatedTask;
 
-      emit(TaskLoaded(updatedTasks, currentState.allTasks));
+      final updatedAllTasks = List<Task>.from(currentState.allTasks)
+        ..[event.taskId] = updatedTask;
+
+      emit(TaskLoaded(updatedTasks, updatedAllTasks));
     }
   }
 
